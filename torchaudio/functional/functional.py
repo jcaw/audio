@@ -225,7 +225,8 @@ def amplitude_to_DB(
         multiplier: float,
         amin: float,
         db_multiplier: float,
-        top_db: Optional[float] = None
+        top_db: Optional[float] = None,
+        batch: bool = False,
 ) -> Tensor:
     r"""Turn a tensor from the power/amplitude scale to the decibel scale.
 
@@ -234,12 +235,17 @@ def amplitude_to_DB(
     full clip.
 
     Args:
-        x (Tensor): Input tensor before being converted to decibel scale
+        x (Tensor): Input spectrogram(s) before being converted to decibel
+            scale. The format should be (..., channels, freq, time). A batch
+            dimension may be included, but is not mandatory.
         multiplier (float): Use 10. for power and 20. for amplitude
         amin (float): Number to clamp ``x``
         db_multiplier (float): Log10(max(reference value and amin))
         top_db (float or None, optional): Minimum negative cut-off in decibels. A reasonable number
             is 80. (Default: ``None``)
+        batch (bool, optional): Whether the input is batched (or ``False`` for an item). Only
+            necessary when ``top_db`` is ``True`` (since cut-off is applied per item).
+            (Default: ``False``)
 
     Returns:
         Tensor: Output tensor in decibel scale
@@ -248,7 +254,13 @@ def amplitude_to_DB(
     x_db -= multiplier * db_multiplier
 
     if top_db is not None:
-        x_db = x_db.clamp(min=x_db.max().item() - top_db)
+        if batch:
+            dims = x_db.dim()
+            db_floors = torch.amax(x_db, dim=tuple(range(1, dims))) - top_db
+            broadcast_shape = (...,) + (None,)*(dims-1)
+            x_db = torch.max(x_db, db_floors[broadcast_shape])
+        else:
+            x_db = x_db.clamp(min=x_db.max().item() - top_db)
 
     return x_db
 

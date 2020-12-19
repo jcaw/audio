@@ -500,19 +500,18 @@ class MFCC(torch.nn.Module):
         waveform = waveform.reshape(-1, shape[-1])
 
         mel_specgram = self.MelSpectrogram(waveform)
+
+        # unpack batch (need to do this early for `amplitude_to_DB`)
+        mel_specgram = mel_specgram.reshape(shape[:-1] + mel_specgram.shape[-2:])
+
         if self.log_mels:
             log_offset = 1e-6
             mel_specgram = torch.log(mel_specgram + log_offset)
         else:
             mel_specgram = self.amplitude_to_DB(mel_specgram)
-        # (channel, n_mels, time).tranpose(...) dot (n_mels, n_mfcc)
-        # -> (channel, time, n_mfcc).tranpose(...)
-        mfcc = torch.matmul(mel_specgram.transpose(1, 2), self.dct_mat).transpose(1, 2)
-
-        # unpack batch
-        mfcc = mfcc.reshape(shape[:-1] + mfcc.shape[-2:])
-
-        return mfcc
+        # (..., channel, n_mels, time).tranpose(...) dot (n_mels, n_mfcc)
+        # -> (..., channel, time, n_mfcc).tranpose(...)
+        return torch.matmul(mel_specgram.transpose(-2, -1), self.dct_mat).transpose(-1, -2)
 
 
 class MuLawEncoding(torch.nn.Module):
