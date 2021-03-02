@@ -210,7 +210,7 @@ class TestFunctional(common_utils.TorchaudioTestCase):
         """Separate test to ensure VAD consistency with differing items."""
         sample_rate = 44100
         torch.manual_seed(0)
-        waveforms = torch.rand(self.batch_size, 2, 100) - 0.5
+        waveforms = torch.rand(self.batch_size, 2, 2 * sample_rate) - 0.5
         self.assert_batch_consistency(
             F.vad, waveforms, sample_rate=sample_rate)
 
