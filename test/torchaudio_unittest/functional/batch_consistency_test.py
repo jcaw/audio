@@ -204,7 +204,9 @@ class TestFunctional(common_utils.TorchaudioTestCase):
         # Each channel is slightly offset - we can use this to create a batch
         # with different items.
         batch = waveform.view(2, 1, -1)
-        self.assert_batch_consistency(F.vad, batch, sample_rate=sample_rate)
+        self.assert_batch_consistency(
+            F.vad, batch, trigger_time=0.05, allowed_gap=0.10,
+            sample_rate=sample_rate)
 
     def test_vad_different_items(self):
         """Separate test to ensure VAD consistency with differing items."""
