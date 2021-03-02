@@ -155,36 +155,35 @@ class TestFunctional(common_utils.TorchaudioTestCase):
         assert (difference >= 1e-5).any()
 
     def test_contrast(self):
-        torch.random.manual_seed(0)
-        waveforms = torch.rand(self.batch_size, 2, 100) - 0.5
+        waveforms = common_utils.get_whitenoise_batch(
+            n_items=self.batch_size, n_channels=2, duration=1)
         self.assert_batch_consistency(
             F.contrast, waveforms, enhancement_amount=80.)
 
     def test_dcshift(self):
-        torch.random.manual_seed(0)
-        waveforms = torch.rand(self.batch_size, 2, 100) - 0.5
+        waveforms = common_utils.get_whitenoise_batch(
+            n_items=self.batch_size, n_channels=2, duration=1)
         self.assert_batch_consistency(
             F.dcshift, waveforms, shift=0.5, limiter_gain=0.05)
 
     def test_overdrive(self):
-        torch.random.manual_seed(0)
-        waveforms = torch.rand(self.batch_size, 2, 100) - 0.5
+        waveforms = common_utils.get_whitenoise_batch(
+            n_items=self.batch_size, n_channels=2, duration=1)
         self.assert_batch_consistency(
             F.overdrive, waveforms, gain=45, colour=30)
 
     def test_phaser(self):
         sample_rate = 44100
-        n_channels = 2
-        waveform = common_utils.get_whitenoise(
-            sample_rate=sample_rate, n_channels=self.batch_size * n_channels,
+        waveforms = common_utils.get_whitenoise_batch(
+            n_items=self.batch_size, n_channels=2, sample_rate=sample_rate,
             duration=1)
-        batch = waveform.view(self.batch_size, n_channels, waveform.size(-1))
-        self.assert_batch_consistency(F.phaser, batch, sample_rate)
+        self.assert_batch_consistency(F.phaser, waveforms, sample_rate)
 
     def test_flanger(self):
-        torch.random.manual_seed(0)
-        waveforms = torch.rand(self.batch_size, 2, 100) - 0.5
         sample_rate = 44100
+        waveforms = common_utils.get_whitenoise_batch(
+            n_items=self.batch_size, n_channels=2, sample_rate=sample_rate,
+            duration=1)
         self.assert_batch_consistency(F.flanger, waveforms, sample_rate)
 
     @parameterized.expand(list(itertools.product(
@@ -211,17 +210,17 @@ class TestFunctional(common_utils.TorchaudioTestCase):
     def test_vad_different_items(self):
         """Separate test to ensure VAD consistency with differing items."""
         sample_rate = 44100
-        torch.manual_seed(0)
-        waveforms = torch.rand(self.batch_size, 2, 2 * sample_rate) - 0.5
+        waveforms = common_utils.get_whitenoise_batch(
+            n_items=self.batch_size, n_channels=2, duration=2,
+            sample_rate=sample_rate)
         self.assert_batch_consistency(
             F.vad, waveforms, sample_rate=sample_rate)
 
     @common_utils.skipIfNoExtension
     def test_compute_kaldi_pitch(self):
         sample_rate = 44100
-        n_channels = 2
-        waveform = common_utils.get_whitenoise(
-            sample_rate=sample_rate, n_channels=self.batch_size * n_channels)
-        batch = waveform.view(self.batch_size, n_channels, waveform.size(-1))
+        waveforms = common_utils.get_whitenoise_batch(
+            n_items=self.batch_size, n_channels=2, sample_rate=sample_rate,
+            duration=1)
         self.assert_batch_consistency(
-            F.compute_kaldi_pitch, batch, sample_rate=sample_rate)
+            F.compute_kaldi_pitch, waveforms, sample_rate=sample_rate)

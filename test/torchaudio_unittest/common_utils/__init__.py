@@ -1,6 +1,7 @@
 from .data_utils import (
     get_asset_path,
     get_whitenoise,
+    get_whitenoise_batch,
     get_sinusoid,
 )
 from .backend_utils import (

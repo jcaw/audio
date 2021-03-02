@@ -78,6 +78,45 @@ def get_whitenoise(
     return convert_tensor_encoding(tensor, dtype)
 
 
+def get_whitenoise_batch(
+    *,
+    sample_rate: int = 16000,
+    duration: float = 1,  # seconds
+    n_items: int = 1,
+    n_channels: int = 1,
+    seed: int = 0,
+    dtype: Union[str, torch.dtype] = "float32",
+    device: Union[str, torch.device] = "cpu",
+    scale_factor: float = 1,
+):
+
+    """Generate pseudo audio data with whitenoise
+    Args:
+        sample_rate: Sampling rate
+        duration: Length of the resulting Tensor in seconds.
+        n_items: Number of items in the batch
+        n_channels: Number of channels
+        seed: Seed value used for random number generation.
+            Note that this function does not modify global random generator state.
+        dtype: Torch dtype
+        device: device
+        scale_factor: scale the Tensor before clamping and quantization
+    Returns:
+        Tensor: shape of (n_channels, sample_rate * duration)
+    """
+    noise = get_whitenoise(
+        sample_rate=sample_rate,
+        duration=duration,
+        n_channels=n_channels * n_items,
+        seed=seed,
+        dtype=dtype,
+        device=device,
+        channels_first=True,
+        scale_factor=scale_factor,
+    )
+    return noise.reshape(n_items, n_channels, noise.size(-1))
+
+
 def get_sinusoid(
     *,
     frequency: float = 300,
